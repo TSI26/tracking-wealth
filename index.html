@@ -332,18 +332,62 @@ body{padding-bottom:env(safe-area-inset-bottom,0px)}
 .u-card .u-nums{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
 .m-phone .mnav-inner{padding-inline:12px}
 .auth-note{font-size:12.5px !important;color:var(--muted)}
-/* login screen */
-.auth{position:fixed;inset:0;z-index:80;background:var(--bg);display:grid;place-items:center;padding:24px 16px;overflow:auto}
-.auth-card{width:100%;max-width:400px;display:flex;flex-direction:column;gap:14px}
-.auth-card .brand{font-size:26px;justify-content:center;margin-bottom:6px}
-.auth-card h1{margin:0;font-family:var(--font-display);font-size:24px;text-align:center}
-.auth-card p{margin:0;color:var(--muted);text-align:center;font-size:14px}
-.auth-card label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
-.auth-card .field{font-size:16px}
+/* login screen: split layout on wide screens (showcase left, form right), form only on phones */
+.auth{position:fixed;inset:0;z-index:80;background:var(--bg);overflow:auto;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+.auth-show{position:relative;overflow:hidden;padding:48px clamp(32px,5vw,72px);display:flex;flex-direction:column;justify-content:space-between;gap:40px;
+  background:radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--accent) 30%,transparent),transparent 60%),radial-gradient(90% 70% at 100% 100%,color-mix(in srgb,var(--earn) 18%,transparent),transparent 60%),var(--surface);border-right:1px solid var(--line)}
+.auth-show .brand{font-size:22px}
+.auth-show h2{margin:0;font-family:var(--font-display);font-weight:800;font-size:clamp(34px,3.6vw,52px);line-height:1.02;letter-spacing:-.01em;text-wrap:balance;max-width:13ch}
+.auth-show h2 em{font-style:normal;color:var(--accent)}
+.auth-show .lead{margin:14px 0 0;color:var(--muted);font-size:16px;max-width:40ch}
+.show-card{background:color-mix(in srgb,var(--bg) 70%,transparent);border:1px solid var(--line);border-radius:20px;padding:20px;max-width:440px;backdrop-filter:blur(6px);box-shadow:var(--shadow)}
+.show-row{display:flex;align-items:center;gap:18px}
+.show-donut{width:96px;height:96px;border-radius:50%;flex:none;background:conic-gradient(#f59e0b 0 28%,#ef4444 28% 46%,#ec4899 46% 63%,#6366f1 63% 78%,#3b82f6 78% 90%,#94a3b8 90% 100%);-webkit-mask:radial-gradient(circle,transparent 58%,#000 59%);mask:radial-gradient(circle,transparent 58%,#000 59%)}
+.show-legend{display:flex;flex-direction:column;gap:7px;font-size:13.5px;flex:1;min-width:0}
+.show-legend span{display:flex;align-items:center;gap:8px}
+.show-legend i{width:9px;height:9px;border-radius:3px;flex:none}
+.show-bars{display:flex;align-items:flex-end;gap:7px;height:70px;margin-top:18px}
+.show-bars div{flex:1;border-radius:5px 5px 2px 2px}
+.show-points{display:flex;flex-wrap:wrap;gap:8px}
+.show-points span{font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--fg) 7%,transparent);border:1px solid var(--line)}
+.auth-side{display:grid;place-items:center;padding:40px 24px calc(40px + env(safe-area-inset-bottom,0px))}
+.auth-card{width:100%;max-width:400px;display:flex;flex-direction:column;gap:16px}
+.auth-logo{display:none;align-items:center;gap:12px;justify-content:center;margin-bottom:4px}
+.auth-logo svg{width:44px;height:44px}
+.auth-card h1{margin:0;font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.1}
+.auth-card .sub{margin:-6px 0 0;color:var(--muted);font-size:14.5px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:4px;gap:4px}
+.auth-tabs button{border:0;background:transparent;border-radius:10px;padding:9px;font-weight:700;color:var(--muted)}
+.auth-tabs button[aria-pressed="true"]{background:var(--surface-2);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.a-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
+.a-field .field{font-size:16px;padding:12px 14px;background:var(--surface)}
+.pw{position:relative}
+.pw .field{padding-right:48px}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;width:38px;height:38px;border-radius:9px;display:grid;place-items:center;color:var(--muted)}
+.eye:hover{color:var(--fg);background:var(--surface-2)}
+.eye svg{width:19px;height:19px}
+.a-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.check{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:500;color:var(--fg);cursor:pointer;user-select:none}
+.check input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.a-link{border:0;background:transparent;color:var(--accent);font-weight:600;font-size:14px;padding:4px 0}
+.a-link:hover{text-decoration:underline}
 .auth-card .primary{width:100%;padding:14px;font-size:16px}
-.auth-switch{border:0;background:transparent;color:var(--accent);font-weight:600;padding:6px}
-.auth-msg{font-size:14px;text-align:center;min-height:20px}
+.auth-card .primary:disabled{opacity:.6;cursor:default}
+.a-hint{font-size:12.5px;color:var(--muted);margin-top:-8px}
+.auth-msg{font-size:14px;min-height:20px;line-height:1.4}
 .auth-msg.err{color:var(--spend)} .auth-msg.ok{color:var(--earn)}
+.auth-msg:empty{display:none}
+.auth-note{font-size:12.5px;color:var(--muted);margin:0;padding:10px 12px;border-radius:11px;background:var(--surface);border:1px solid var(--line)}
+.a-back{align-self:flex-start}
+@media (max-width:900px){
+  .auth{grid-template-columns:1fr}
+  .auth-show{display:none}
+  .auth-logo{display:flex}
+  .auth-side{align-items:start;padding-top:calc(48px + env(safe-area-inset-top,0px))}
+  .auth-card h1{text-align:center}
+  .auth-card .sub{text-align:center}
+  .auth-msg{text-align:center}
+}
 </style>
 </head>
 <body>
@@ -566,11 +610,20 @@ async function initStore() {
   if (!cfg.supabaseUrl || !cfg.supabaseKey || cfg.supabaseUrl.includes('COLLE') || !window.supabase) {
     return useLocal('Mode local : la synchronisation n’est pas encore configurée (fichier config.js). Tes opérations restent sur cet appareil.');
   }
+  state.recovering = /type=recovery/.test(location.hash);
+  // "Rester connecté" unticked: forget the saved session once the browser has been closed.
+  try {
+    if (lsGet('tw-remember', true) === false && !sessionStorage.getItem('tw-alive')) {
+      Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
+    }
+  } catch (x) {}
   sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey, {auth: {persistSession: true, autoRefreshToken: true}});
   sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') state.recovering = true;
     if (session) {
-      hideAuth();
       state.me = session.user.id; state.myEmail = session.user.email;
+      if (state.recovering) { authMode = 'recovery'; showAuth(); return; }
+      hideAuth();
       if (state.store !== 'cloud') { state.store = 'cloud'; setTimeout(() => { fetchAll(); checkAdmin(); }, 0); }
     } else {
       signedOut();
@@ -607,51 +660,159 @@ async function deleteTx(id) {
 
 /* ---------- login screen ---------- */
 let authMode = 'login';
+let authEmail = '';
+const appUrl = () => location.origin + location.pathname;
+const EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.1 6.1C3.6 7.8 2 12 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.3M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+const LOGO = '<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--surface-2)"/><rect x="14" y="30" width="9" height="18" rx="2.5" fill="var(--spend)"/><rect x="27.5" y="22" width="9" height="26" rx="2.5" fill="var(--accent)"/><rect x="41" y="14" width="9" height="34" rx="2.5" fill="var(--earn)"/></svg>';
+const pwField = (id, label, ac) => `<label class="a-field">${label}<div class="pw"><input id="${id}" class="field" type="password" autocomplete="${ac}" minlength="6" required><button type="button" class="eye" data-eye="${id}" aria-label="Afficher le mot de passe" aria-pressed="false">${EYE}</button></div></label>`;
+function authError(err) {
+  const t = String(err && err.message || '');
+  if (/Invalid login/i.test(t)) return 'E-mail ou mot de passe incorrect.';
+  if (/not confirmed/i.test(t)) return 'Ton e-mail n’est pas encore confirmé : ouvre le lien reçu par e-mail (regarde aussi dans les indésirables).';
+  if (/already registered/i.test(t)) return 'Un compte existe déjà avec cette adresse : connecte-toi.';
+  if (/signups? not allowed/i.test(t)) return 'Les inscriptions sont fermées pour le moment.';
+  if (/rate limit|too many/i.test(t)) return 'Trop de demandes d’e-mail en peu de temps. Réessaie dans une heure.';
+  if (/should be different/i.test(t)) return 'Choisis un mot de passe différent de l’ancien.';
+  if (/at least/i.test(t) && /password/i.test(t)) return 'Le mot de passe doit faire au moins 6 caractères.';
+  if (/invalid/i.test(t) && /email/i.test(t)) return 'Cette adresse e-mail n’est pas valide.';
+  return 'Ça n’a pas marché : ' + (t || 'pas de réponse du serveur. Vérifie ta connexion internet.');
+}
 function showAuth(msg, kind) {
-  const signup = authMode === 'signup';
+  const m = authMode;
+  const remember = lsGet('tw-remember', true) !== false;
+  const head = {
+    login: ['Content de te revoir', 'Connecte-toi pour retrouver tes opérations.'],
+    signup: ['Créer ton compte', 'Une seule fois : ensuite tu te connectes partout avec ces identifiants.'],
+    forgot: ['Mot de passe oublié', 'Indique ton e-mail : tu recevras un lien pour en choisir un nouveau.'],
+    recovery: ['Nouveau mot de passe', 'Choisis ton nouveau mot de passe, puis valide.']
+  }[m];
+  const body = {
+    login: `
+      <label class="a-field">E-mail<input id="a-email" class="field" type="email" autocomplete="email" inputmode="email" required value="${esc(authEmail)}"></label>
+      ${pwField('a-pass', 'Mot de passe', 'current-password')}
+      <div class="a-row">
+        <label class="check"><input id="a-remember" type="checkbox" ${remember ? 'checked' : ''}>Rester connecté</label>
+        <button class="a-link" type="button" data-amode="forgot">Mot de passe oublié ?</button>
+      </div>
+      <button class="primary" type="submit" id="a-submit">Se connecter</button>`,
+    signup: `
+      <label class="a-field">E-mail<input id="a-email" class="field" type="email" autocomplete="email" inputmode="email" required value="${esc(authEmail)}"></label>
+      ${pwField('a-pass', 'Mot de passe', 'new-password')}
+      <div class="a-hint">6 caractères minimum.</div>
+      ${pwField('a-pass2', 'Confirme le mot de passe', 'new-password')}
+      <label class="check"><input id="a-remember" type="checkbox" ${remember ? 'checked' : ''}>Rester connecté</label>
+      <p class="auth-note">L’administrateur de cette appli peut consulter toutes les opérations enregistrées.</p>
+      <button class="primary" type="submit" id="a-submit">Créer mon compte</button>`,
+    forgot: `
+      <label class="a-field">E-mail<input id="a-email" class="field" type="email" autocomplete="email" inputmode="email" required value="${esc(authEmail)}"></label>
+      <button class="primary" type="submit" id="a-submit">Envoyer le lien</button>
+      <button class="a-link a-back" type="button" data-amode="login">← Retour à la connexion</button>`,
+    recovery: `
+      ${pwField('a-pass', 'Nouveau mot de passe', 'new-password')}
+      <div class="a-hint">6 caractères minimum.</div>
+      ${pwField('a-pass2', 'Confirme le mot de passe', 'new-password')}
+      <button class="primary" type="submit" id="a-submit">Enregistrer le mot de passe</button>`
+  }[m];
   $('#auth-root').innerHTML = `
     <div class="auth">
-      <form class="auth-card" id="auth-form" novalidate>
+      <aside class="auth-show" aria-hidden="true">
         <div class="brand">TRACKING <small>by</small> <b>WEALTH</b></div>
-        <h1>${signup ? 'Créer ton compte' : 'Connexion'}</h1>
-        <p>${signup ? 'Une seule fois : ensuite tu te connectes avec ces identifiants sur tous tes appareils.' : 'Connecte-toi pour retrouver tes opérations.'}</p>
-        <label>E-mail<input id="a-email" class="field" type="email" autocomplete="email" required></label>
-        <label>Mot de passe<input id="a-pass" class="field" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="6" required></label>
-        <button class="primary" type="submit" id="a-submit">${signup ? 'Créer mon compte' : 'Se connecter'}</button>
-        ${signup ? '<p class="auth-note">L’administrateur de cette appli peut consulter toutes les opérations enregistrées.</p>' : ''}
-        <div class="auth-msg ${kind || ''}" id="a-msg">${esc(msg || '')}</div>
-        <button class="auth-switch" type="button" id="a-switch">${signup ? 'J’ai déjà un compte' : 'Première fois ? Créer un compte'}</button>
-      </form>
+        <div>
+          <h2>Ton argent, <em>enfin lisible.</em></h2>
+          <p class="lead">Note une dépense en quelques secondes. Vois tout de suite où part ton argent et d’où il vient, sur ton ordi comme sur ton téléphone.</p>
+        </div>
+        <div class="show-card">
+          <div class="show-row">
+            <div class="show-donut"></div>
+            <div class="show-legend">
+              <span><i style="background:#f59e0b"></i>Courses</span>
+              <span><i style="background:#ef4444"></i>Restos & fast-food</span>
+              <span><i style="background:#ec4899"></i>Shopping</span>
+              <span><i style="background:#6366f1"></i>Loisirs</span>
+            </div>
+          </div>
+          <div class="show-bars">
+            ${[38,62,45,80,52,70,58,90,66,48,74,84].map((h, i) => `<div style="height:${h}%;background:${i % 2 ? 'var(--earn)' : 'var(--spend)'};opacity:${0.55 + i * 0.035}"></div>`).join('')}
+          </div>
+        </div>
+        <div class="show-points"><span>Saisie en 5 secondes</span><span>Synchronisé partout</span><span>Tes données restent privées</span></div>
+      </aside>
+      <div class="auth-side">
+        <form class="auth-card" id="auth-form" novalidate>
+          <div class="auth-logo">${LOGO}<div class="brand">TRACKING <small>by</small> <b>WEALTH</b></div></div>
+          ${m === 'login' || m === 'signup' ? `<div class="auth-tabs" role="group" aria-label="Connexion ou inscription">
+            <button type="button" data-amode="login" aria-pressed="${m === 'login'}">Connexion</button>
+            <button type="button" data-amode="signup" aria-pressed="${m === 'signup'}">Créer un compte</button>
+          </div>` : ''}
+          <div><h1>${head[0]}</h1></div>
+          <p class="sub">${head[1]}</p>
+          ${body}
+          <div class="auth-msg ${kind || ''}" id="a-msg" role="status">${esc(msg || '')}</div>
+        </form>
+      </div>
     </div>`;
-  $('#a-switch').addEventListener('click', () => { authMode = signup ? 'login' : 'signup'; showAuth(); });
-  $('#auth-form').addEventListener('submit', async e => {
-    e.preventDefault();
-    const email = $('#a-email').value.trim(), password = $('#a-pass').value;
-    const m = $('#a-msg');
-    if (!email || password.length < 6) { m.className = 'auth-msg err'; m.textContent = 'Indique ton e-mail et un mot de passe d’au moins 6 caractères.'; return; }
-    $('#a-submit').disabled = true; m.className = 'auth-msg'; m.textContent = signup ? 'Création du compte…' : 'Connexion…';
-    try {
-      if (signup) {
-        const {data: d, error} = await sb.auth.signUp({email, password});
-        if (error) throw error;
-        if (!d.session) { authMode = 'login'; return showAuth('Compte créé. Ouvre le lien reçu par e-mail pour le confirmer, puis connecte-toi.', 'ok'); }
-      } else {
-        const {error} = await sb.auth.signInWithPassword({email, password});
-        if (error) throw error;
-      }
-    } catch (err) {
-      const t = String(err && err.message || '');
-      m.className = 'auth-msg err';
-      m.textContent = /Invalid login/i.test(t) ? 'E-mail ou mot de passe incorrect.'
-        : /not confirmed/i.test(t) ? 'Ton e-mail n’est pas encore confirmé : ouvre le lien reçu par e-mail.'
-        : /already registered/i.test(t) ? 'Ce compte existe déjà : connecte-toi.'
-        : /signups not allowed|Signups not allowed/i.test(t) ? 'La création de comptes est désactivée.'
-        : /rate limit/i.test(t) ? 'Trop de tentatives d’envoi d’e-mail. Désactive « Confirm email » dans Supabase, attends quelques minutes et réessaie.'
-        : /invalid/i.test(t) && /email/i.test(t) ? 'Supabase refuse cette adresse e-mail (' + t + ').'
-        : 'Ça n’a pas marché : ' + (t || 'pas de réponse du serveur. Vérifie ta connexion internet.');
-      $('#a-submit').disabled = false;
+  const root = $('#auth-root');
+  root.querySelectorAll('[data-amode]').forEach(b => b.addEventListener('click', () => {
+    const e = $('#a-email'); if (e) authEmail = e.value.trim();
+    authMode = b.dataset.amode; showAuth();
+  }));
+  root.querySelectorAll('[data-eye]').forEach(b => b.addEventListener('click', () => {
+    const inp = document.getElementById(b.dataset.eye);
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    b.innerHTML = show ? EYE_OFF : EYE;
+    b.setAttribute('aria-pressed', String(show));
+    b.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+    inp.focus();
+  }));
+  $('#auth-form').addEventListener('submit', onAuthSubmit);
+}
+async function onAuthSubmit(e) {
+  e.preventDefault();
+  const m = authMode;
+  const msg = $('#a-msg'), btn = $('#a-submit');
+  const fail = t => { msg.className = 'auth-msg err'; msg.textContent = t; btn.disabled = false; };
+  const email = ($('#a-email') || {}).value ? $('#a-email').value.trim() : '';
+  const pass = ($('#a-pass') || {}).value || '';
+  const pass2 = ($('#a-pass2') || {}).value || '';
+  if (email) authEmail = email;
+  if (m !== 'recovery' && !/^\S+@\S+\.\S+$/.test(email)) return fail('Indique une adresse e-mail valide.');
+  if ((m === 'login' || m === 'signup' || m === 'recovery') && pass.length < 6) return fail('Le mot de passe doit faire au moins 6 caractères.');
+  if ((m === 'signup' || m === 'recovery') && pass !== pass2) return fail('Les deux mots de passe ne sont pas identiques.');
+  btn.disabled = true; msg.className = 'auth-msg'; msg.textContent = {login: 'Connexion…', signup: 'Création du compte…', forgot: 'Envoi…', recovery: 'Enregistrement…'}[m];
+  const rememberBox = $('#a-remember');
+  try {
+    if (m === 'login' || m === 'signup') {
+      const remember = rememberBox ? rememberBox.checked : true;
+      lsSet('tw-remember', remember);
+      try { sessionStorage.setItem('tw-alive', '1'); } catch (x) {}
     }
-  });
+    if (m === 'login') {
+      const {error} = await sb.auth.signInWithPassword({email, password: pass});
+      if (error) throw error;
+    } else if (m === 'signup') {
+      const {data: d, error} = await sb.auth.signUp({email, password: pass, options: {emailRedirectTo: appUrl()}});
+      if (error) throw error;
+      if (!d.session) { authMode = 'login'; return showAuth('Compte créé. Ouvre le lien reçu par e-mail pour le confirmer (regarde aussi dans les indésirables), puis connecte-toi.', 'ok'); }
+    } else if (m === 'forgot') {
+      const {error} = await sb.auth.resetPasswordForEmail(email, {redirectTo: appUrl()});
+      if (error) throw error;
+      authMode = 'login';
+      return showAuth('Si un compte existe avec cette adresse, un e-mail vient de partir. Ouvre le lien qu’il contient pour choisir un nouveau mot de passe (regarde aussi dans les indésirables).', 'ok');
+    } else if (m === 'recovery') {
+      const {error} = await sb.auth.updateUser({password: pass});
+      if (error) throw error;
+      state.recovering = false;
+      try { history.replaceState(null, '', appUrl()); } catch (x) {}
+      authMode = 'login';
+      hideAuth();
+      if (state.store !== 'cloud') { state.store = 'cloud'; fetchAll(); checkAdmin(); }
+      toast('Mot de passe modifié');
+    }
+  } catch (err) {
+    fail(authError(err));
+  }
 }
 function hideAuth() { $('#auth-root').innerHTML = ''; }
 
