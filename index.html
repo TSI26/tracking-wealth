@@ -318,6 +318,20 @@ body{padding-bottom:env(safe-area-inset-bottom,0px)}
 .m-desk .side .logout span{display:inline}
 @media (max-width:820px){.m-desk .side .logout span{display:none}}
 
+/* admin */
+.view-flag{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:16px;padding:12px 16px;border-radius:14px;background:color-mix(in srgb,var(--accent) 16%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));font-size:14px}
+.view-flag strong{font-weight:700}
+.view-flag button{margin-left:auto;border:0;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:10px;padding:8px 14px}
+.users-table td .see{border:1px solid var(--line);background:var(--surface-2);border-radius:9px;padding:6px 12px;font-weight:600}
+.users-table tr.me td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.tag-me{font-size:11px;font-weight:700;color:var(--accent);margin-left:8px;text-transform:uppercase;letter-spacing:.06em}
+.u-cards{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.u-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.u-card .u-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.u-card .u-mail{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.u-card .u-nums{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.m-phone .mnav-inner{padding-inline:12px}
+.auth-note{font-size:12.5px !important;color:var(--muted)}
 /* login screen */
 .auth{position:fixed;inset:0;z-index:80;background:var(--bg);display:grid;place-items:center;padding:24px 16px;overflow:auto}
 .auth-card{width:100%;max-width:400px;display:flex;flex-direction:column;gap:14px}
@@ -344,6 +358,9 @@ body{padding-bottom:env(safe-area-inset-bottom,0px)}
       </button>
       <button type="button" role="tab" data-view="hist" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Opérations</span>
+      </button>
+      <button type="button" role="tab" data-view="admin" aria-selected="false" class="admin-only" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><span>Admin</span>
       </button>
     </nav>
     <button class="side-add" type="button" data-act="add">
@@ -376,6 +393,7 @@ body{padding-bottom:env(safe-area-inset-bottom,0px)}
       <div id="banner" class="banner" hidden></div>
       <div id="view-dash"></div>
       <div id="view-hist" hidden></div>
+      <div id="view-admin" hidden></div>
     </main>
   </div>
 </div>
@@ -390,6 +408,9 @@ body{padding-bottom:env(safe-area-inset-bottom,0px)}
     </button>
     <button class="mtab" data-view="hist" aria-selected="false" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Historique
+    </button>
+    <button class="mtab admin-only" data-view="admin" aria-selected="false" type="button" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>Admin
     </button>
   </div>
 </nav>
@@ -462,6 +483,7 @@ const state = {
   period: lsGet('tw-period', 'month'),
   cy: now.getFullYear(), cm: now.getMonth(),
   tx: [], demo: false, loaded: false, store: 'pending',
+  me: null, isAdmin: false, adminUsers: [], adminAll: [], adminLoaded: false, viewAs: null,
   q: '', fType: 'all', fCat: 'all'
 };
 const lastPrefs = () => lsGet('tw-last', {type:'d', pay:{d:'cb', r:'virement'}});
@@ -470,7 +492,8 @@ quick.pay = (lastPrefs().pay || {})[quick.type] || 'cb';
 
 let col = null;
 let charts = [];
-const data = () => state.demo ? DEMO : state.tx;
+const data = () => state.demo ? DEMO : state.viewAs ? state.adminAll.filter(t => t.user_id === state.viewAs.id) : state.tx;
+const readOnly = () => !!state.viewAs;
 
 /* ---------- storage (Supabase) ---------- */
 const LOCAL_KEY = 'tw-local-tx';
@@ -481,13 +504,13 @@ function useLocal(reason) {
   state.store = 'local'; state.tx = lsGet(LOCAL_KEY, []); state.loaded = true;
   showBanner(reason); render();
 }
-const rowToTx = r => ({id: r.id, type: r.type, amount: Number(r.amount), cat: r.cat, pay: r.pay, date: String(r.date).slice(0, 10), note: r.note || '', createdAt: Date.parse(r.created_at) || 0});
+const rowToTx = r => ({id: r.id, user_id: r.user_id, type: r.type, amount: Number(r.amount), cat: r.cat, pay: r.pay, date: String(r.date).slice(0, 10), note: r.note || '', createdAt: Date.parse(r.created_at) || 0});
 async function fetchAll() {
   if (!sb) return;
   let all = [], from = 0;
   while (true) {
-    const {data: rows, error} = await sb.from('transactions').select('*').order('date', {ascending: false}).range(from, from + 999);
-    if (error) { showBanner('Impossible de charger tes opérations. Vérifie ta connexion internet puis recharge la page.'); return; }
+    const {data: rows, error} = await sb.from('transactions').select('*').eq('user_id', state.me).order('date', {ascending: false}).range(from, from + 999);
+    if (error) { showBanner('Impossible de charger tes opérations. Détail : ' + (error.message || error.code || 'pas de réponse du serveur') + (error.code ? ' (code ' + error.code + ')' : '')); state.loaded = true; render(); return; }
     all = all.concat(rows);
     if (rows.length < 1000) break;
     from += 1000;
@@ -496,6 +519,31 @@ async function fetchAll() {
   state.tx = all.map(rowToTx); state.loaded = true;
   if (state.tx.length && state.demo) state.demo = false;
   render();
+  if (state.isAdmin) fetchAdmin();
+}
+async function checkAdmin() {
+  const {data: row} = await sb.from('admins').select('user_id').eq('user_id', state.me).maybeSingle();
+  state.isAdmin = !!row;
+  document.querySelectorAll('.admin-only').forEach(b => { b.hidden = !state.isAdmin; });
+  if (state.isAdmin) fetchAdmin();
+  else if (state.view === 'admin') { state.view = 'dash'; render(); }
+}
+async function fetchAdmin() {
+  const u = await sb.rpc('admin_users');
+  if (u.error) { state.adminError = u.error.message; state.adminLoaded = true; if (state.view === 'admin') render(); return; }
+  let all = [], from = 0;
+  while (true) {
+    const {data: rows, error} = await sb.from('transactions').select('*').order('date', {ascending: false}).range(from, from + 999);
+    if (error) { state.adminError = error.message; break; }
+    all = all.concat(rows);
+    if (rows.length < 1000) break;
+    from += 1000;
+  }
+  state.adminError = null;
+  state.adminUsers = u.data || [];
+  state.adminAll = all.map(rowToTx);
+  state.adminLoaded = true;
+  if (state.view === 'admin' || state.viewAs) render();
 }
 async function initStore() {
   if (!cfg.supabaseUrl || !cfg.supabaseKey || cfg.supabaseUrl.includes('COLLE') || !window.supabase) {
@@ -505,9 +553,13 @@ async function initStore() {
   sb.auth.onAuthStateChange((event, session) => {
     if (session) {
       hideAuth();
-      if (state.store !== 'cloud') { state.store = 'cloud'; setTimeout(fetchAll, 0); }
+      state.me = session.user.id; state.myEmail = session.user.email;
+      if (state.store !== 'cloud') { state.store = 'cloud'; setTimeout(() => { fetchAll(); checkAdmin(); }, 0); }
     } else {
       state.store = 'pending'; state.tx = []; state.loaded = false;
+      state.me = null; state.isAdmin = false; state.adminUsers = []; state.adminAll = []; state.adminLoaded = false; state.viewAs = null;
+      document.querySelectorAll('.admin-only').forEach(b => { b.hidden = true; });
+      if (state.view === 'admin') state.view = 'dash';
       showAuth();
     }
   });
@@ -553,6 +605,7 @@ function showAuth(msg, kind) {
         <label>E-mail<input id="a-email" class="field" type="email" autocomplete="email" required></label>
         <label>Mot de passe<input id="a-pass" class="field" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="6" required></label>
         <button class="primary" type="submit" id="a-submit">${signup ? 'Créer mon compte' : 'Se connecter'}</button>
+        ${signup ? '<p class="auth-note">L’administrateur de cette appli peut consulter toutes les opérations enregistrées.</p>' : ''}
         <div class="auth-msg ${kind || ''}" id="a-msg">${esc(msg || '')}</div>
         <button class="auth-switch" type="button" id="a-switch">${signup ? 'J’ai déjà un compte' : 'Première fois ? Créer un compte'}</button>
       </form>
@@ -580,7 +633,9 @@ function showAuth(msg, kind) {
         : /not confirmed/i.test(t) ? 'Ton e-mail n’est pas encore confirmé : ouvre le lien reçu par e-mail.'
         : /already registered/i.test(t) ? 'Ce compte existe déjà : connecte-toi.'
         : /signups not allowed|Signups not allowed/i.test(t) ? 'La création de comptes est désactivée.'
-        : 'Ça n’a pas marché. Vérifie ta connexion internet et réessaie.';
+        : /rate limit/i.test(t) ? 'Trop de tentatives d’envoi d’e-mail. Désactive « Confirm email » dans Supabase, attends quelques minutes et réessaie.'
+        : /invalid/i.test(t) && /email/i.test(t) ? 'Supabase refuse cette adresse e-mail (' + t + ').'
+        : 'Ça n’a pas marché : ' + (t || 'pas de réponse du serveur. Vérifie ta connexion internet.');
       $('#a-submit').disabled = false;
     }
   });
@@ -644,8 +699,9 @@ function render() {
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === state.view)));
   $('#view-dash').hidden = state.view !== 'dash';
   $('#view-hist').hidden = state.view !== 'hist';
+  $('#view-admin').hidden = state.view !== 'admin';
   renderSideBal();
-  if (state.view === 'dash') renderDash(); else renderHist();
+  if (state.view === 'dash') renderDash(); else if (state.view === 'admin') renderAdmin(); else renderHist();
   if (fid && !document.querySelector('#panel-root .overlay')) {
     const n = document.getElementById(fid);
     if (n && n !== document.activeElement) { n.focus(); try { if (s0 != null) n.setSelectionRange(s0, s1); } catch {} }
@@ -678,13 +734,14 @@ function periodControls() {
     </div>
   </div>`;
 }
-const demoFlag = () => state.demo ? `<div style="margin-bottom:14px"><span class="demo-flag">Données d’exemple, rien n’est enregistré <button type="button" data-act="nodemo">Quitter</button></span></div>` : '';
+const viewFlag = () => state.viewAs ? `<div class="view-flag"><span>Tu consultes l’espace de <strong>${esc(state.viewAs.email)}</strong>, en lecture seule.</span><button type="button" data-act="stopview">Revenir à mon espace</button></div>` : '';
+const demoFlag = () => viewFlag() + (state.demo ? `<div style="margin-bottom:14px"><span class="demo-flag">Données d’exemple, rien n’est enregistré <button type="button" data-act="nodemo">Quitter</button></span></div>` : '');
 
 function renderDash() {
   destroyCharts();
   const el = $('#view-dash');
   if (!state.loaded) { el.innerHTML = `<div class="welcome"><p>Chargement de tes opérations…</p></div>`; return; }
-  if (!state.tx.length && !state.demo) {
+  if (!state.tx.length && !state.demo && !state.viewAs) {
     el.innerHTML = `
       <div class="page-head"><h1>Dashboard<small>Ton argent, en un coup d’œil</small></h1></div>
       <section class="welcome">
@@ -907,6 +964,54 @@ function renderBalance(all, r) {
   }));
 }
 
+/* ---------- admin ---------- */
+function renderAdmin() {
+  destroyCharts();
+  const el = $('#view-admin');
+  if (!state.isAdmin) { el.innerHTML = ''; return; }
+  if (!state.adminLoaded) { el.innerHTML = `<div class="page-head"><h1>Admin<small>Chargement des utilisateurs…</small></h1></div>`; return; }
+  if (state.adminError) {
+    el.innerHTML = `<div class="page-head"><h1>Admin</h1></div><div class="banner">Impossible de charger l’espace admin : ${esc(state.adminError)}. Vérifie que le code SQL « espace administrateur » a bien été exécuté dans Supabase.</div>`;
+    return;
+  }
+  const users = state.adminUsers.map(u => {
+    const tx = state.adminAll.filter(t => t.user_id === u.id);
+    const d = sum(tx, 'd'), r = sum(tx, 'r');
+    const last = tx.reduce((a, t) => t.date > a ? t.date : a, '');
+    return {...u, n: tx.length, d, r, bal: round2(r - d), last};
+  });
+  const totD = sum(state.adminAll, 'd'), totR = sum(state.adminAll, 'r');
+  const fmtDate = v => v ? new Date(v).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short', year: 'numeric'}) : '—';
+  const head = `<div class="page-head"><h1>Admin<small>Tous les utilisateurs et leurs opérations</small></h1><button class="ghost" type="button" data-act="adminrefresh">Actualiser</button></div>
+    <section class="kpis" style="margin-bottom:12px">
+      <div class="kpi balance"><div class="k-label"><i style="background:var(--accent)"></i>Utilisateurs</div><div class="k-val num">${users.length}</div><span class="k-sub">${users.filter(u => u.n).length} actif${users.filter(u => u.n).length > 1 ? 's' : ''} (au moins une opération)</span></div>
+      <div class="kpi"><div class="k-label"><i style="background:var(--muted)"></i>Opérations</div><div class="k-val num">${state.adminAll.length}</div><span class="k-sub">tous comptes confondus</span></div>
+      <div class="kpi"><div class="k-label"><i style="background:var(--spend)"></i>Dépenses totales</div><div class="k-val num" style="color:var(--spend)">${eur(totD)}</div></div>
+      <div class="kpi"><div class="k-label"><i style="background:var(--earn)"></i>Revenus totaux</div><div class="k-val num" style="color:var(--earn)">${eur(totR)}</div></div>
+    </section>`;
+  if (state.mode === 'desk') {
+    el.innerHTML = head + `<div class="sheet-table-wrap"><table class="tx-table users-table">
+      <thead><tr><th>Utilisateur</th><th>Inscrit le</th><th>Dernière connexion</th><th class="r">Opérations</th><th class="r">Dépenses</th><th class="r">Revenus</th><th class="r">Solde</th><th></th></tr></thead>
+      <tbody>${users.map(u => `<tr class="${u.id === state.me ? 'me' : ''}">
+        <td><strong>${esc(u.email)}</strong>${u.id === state.me ? '<span class="tag-me">Toi</span>' : ''}</td>
+        <td class="num">${fmtDate(u.created_at)}</td>
+        <td class="num">${fmtDate(u.last_sign_in_at)}</td>
+        <td class="r num">${u.n}</td>
+        <td class="r num amt-d">${eur(u.d)}</td>
+        <td class="r num amt-r">${eur(u.r)}</td>
+        <td class="r num" style="font-weight:700">${u.bal > 0 ? '+' : ''}${eur(u.bal)}</td>
+        <td class="r"><button class="see" type="button" data-see="${u.id}">${u.id === state.me ? 'Mon espace' : 'Voir son espace'}</button></td>
+      </tr>`).join('')}</tbody></table></div>
+      <p class="q-hint">Pour retirer l’accès à quelqu’un : Supabase, Authentication, Users, puis Delete user.</p>`;
+  } else {
+    el.innerHTML = head + `<div class="u-cards">${users.map(u => `<div class="u-card">
+        <div class="u-top"><span class="u-mail">${esc(u.email)}${u.id === state.me ? '<span class="tag-me">Toi</span>' : ''}</span><strong class="num">${u.bal > 0 ? '+' : ''}${eur(u.bal)}</strong></div>
+        <div class="u-nums num"><span>${u.n} opération${u.n > 1 ? 's' : ''}</span><span style="color:var(--spend)">−${eur(u.d)}</span><span style="color:var(--earn)">+${eur(u.r)}</span><span>Connexion : ${fmtDate(u.last_sign_in_at)}</span></div>
+        <button class="ghost" type="button" data-see="${u.id}">${u.id === state.me ? 'Mon espace' : 'Voir son espace'}</button>
+      </div>`).join('')}</div>`;
+  }
+}
+
 /* ---------- operations (history) ---------- */
 function filtered() {
   const q = state.q.trim().toLowerCase();
@@ -940,11 +1045,11 @@ function renderHist() {
   const summary = `<div class="h-summary num"><span>${list.length} opération${list.length>1?'s':''}</span><span style="color:var(--spend)">−${eur(sum(list,'d'))}</span><span style="color:var(--earn)">+${eur(sum(list,'r'))}</span></div>`;
   if (state.mode === 'desk') {
     el.innerHTML = `${demoFlag()}
-      <div class="page-head"><h1>Opérations<small>Saisis dans la première ligne, puis Entrée pour enchaîner</small></h1>${summary}</div>
+      <div class="page-head"><h1>Opérations<small>${readOnly() ? 'Lecture seule' : 'Saisis dans la première ligne, puis Entrée pour enchaîner'}</small></h1>${summary}</div>
       ${histTools()}
       <div class="sheet-table-wrap">${tableHtml(list)}</div>
-      <p class="q-hint">${quick.err ? `<span class="q-err">${esc(quick.err)}</span>` : 'Clique sur une ligne pour la modifier ou la supprimer.'}</p>`;
-    bindQuick();
+      <p class="q-hint">${readOnly() ? '' : quick.err ? `<span class="q-err">${esc(quick.err)}</span>` : 'Clique sur une ligne pour la modifier ou la supprimer.'}</p>`;
+    if (!readOnly()) bindQuick();
   } else {
     el.innerHTML = `${demoFlag()}${histTools()}<div style="margin:12px 0 0">${summary}</div>${listHtml(list)}`;
   }
@@ -972,14 +1077,14 @@ function tableHtml(list) {
     <colgroup><col style="width:130px"><col style="width:120px"><col style="width:22%"><col><col style="width:120px"><col style="width:150px"></colgroup>
     <thead><tr><th>Date</th><th>Type</th><th>Catégorie</th><th>Motif</th><th>Moyen</th><th class="r">Montant</th></tr></thead>
     <tbody>
-      <tr class="quick">
+      ${readOnly() ? '' : `<tr class="quick">
         <td><input id="q-date" class="qf" type="date" value="${quick.date}" aria-label="Date"></td>
         <td><select id="q-type" class="qf" aria-label="Type"><option value="d" ${quick.type==='d'?'selected':''}>Dépense</option><option value="r" ${quick.type==='r'?'selected':''}>Revenu</option></select></td>
         <td><select id="q-cat" class="qf" aria-label="Catégorie"><option value="">Catégorie…</option>${cats.map(c => `<option value="${c.id}" ${quick.cat===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></td>
         <td><input id="q-note" class="qf" type="text" maxlength="80" placeholder="Motif (facultatif)" value="${esc(quick.note)}" aria-label="Motif"></td>
         <td><select id="q-pay" class="qf" aria-label="Moyen de paiement">${PAYS.map(p => `<option value="${p.id}" ${quick.pay===p.id?'selected':''}>${p.name}</option>`).join('')}</select></td>
         <td><div style="display:flex;gap:6px"><input id="q-amount" class="qf amt" inputmode="decimal" placeholder="0,00 €" value="${esc(quick.amount)}" aria-label="Montant"><button class="q-add" type="button" data-act="quick">Ajouter</button></div></td>
-      </tr>
+      </tr>`}
       ${rows || `<tr><td colspan="6"><div class="empty-card">${data().length ? 'Aucune opération ne correspond à ta recherche.' : 'Aucune opération pour l’instant. Remplis la ligne ci-dessus pour commencer.'}</div></td></tr>`}
     </tbody></table>`;
 }
@@ -994,6 +1099,7 @@ function bindQuick() {
   document.querySelectorAll('tr.quick .qf').forEach(n => n.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); quickSave(); } }));
 }
 async function quickSave() {
+  if (readOnly()) return;
   const amount = parseAmount(quick.amount);
   quick.err = '';
   if (!quick.date) quick.err = 'Choisis une date.';
@@ -1003,7 +1109,7 @@ async function quickSave() {
   const payload = {type: quick.type, amount, cat: quick.cat, pay: quick.pay, date: quick.date, note: quick.note.trim()};
   quick.amount = ''; quick.note = '';
   try { await saveTx(payload); toast(payload.type === 'd' ? `Dépense de ${eur(amount)} ajoutée` : `Revenu de ${eur(amount)} ajouté`); }
-  catch (e) { toast(e && e.code === 'quota_exceeded' ? 'Stockage plein : supprime d’anciennes opérations.' : 'Enregistrement impossible. Réessaie dans un instant.'); }
+  catch (e) { toast(e && e.code === 'quota_exceeded' ? 'Stockage plein : supprime d’anciennes opérations.' : 'Enregistrement impossible : ' + ((e && e.message) || 'réessaie dans un instant.')); }
   renderHist();
   document.getElementById('q-cat')?.focus();
 }
@@ -1052,6 +1158,7 @@ async function exportCsv(list) {
 /* ---------- add / edit panel ---------- */
 let form = null;
 function openPanel(tx) {
+  if (readOnly()) return toast('Lecture seule : reviens à ton espace pour ajouter ou modifier.');
   if (state.demo && tx) return toast('Les exemples ne se modifient pas.');
   const last = lastPrefs();
   form = tx ? {...tx, amountStr: String(tx.amount).replace('.', ',')} :
@@ -1106,7 +1213,7 @@ async function panelSave() {
   const payload = {id: f.id, type: f.type, amount, cat: f.cat, pay: f.pay, date: f.date, note: f.note.trim(), createdAt: f.createdAt};
   closePanel();
   try { await saveTx(payload); toast(isEdit ? 'Modifié' : (payload.type === 'd' ? `Dépense de ${eur(amount)} ajoutée` : `Revenu de ${eur(amount)} ajouté`)); }
-  catch (e) { toast(e && e.code === 'quota_exceeded' ? 'Stockage plein : supprime d’anciennes opérations.' : 'Enregistrement impossible. Réessaie dans un instant.'); }
+  catch (e) { toast(e && e.code === 'quota_exceeded' ? 'Stockage plein : supprime d’anciennes opérations.' : 'Enregistrement impossible : ' + ((e && e.message) || 'réessaie dans un instant.')); }
 }
 
 function toast(msg) {
@@ -1123,6 +1230,9 @@ document.addEventListener('click', async e => {
   if (t.dataset.mode) { state.mode = t.dataset.mode; lsSet('tw-mode', state.mode); render(); window.scrollTo(0, 0); return; }
   if (t.dataset.view) { state.view = t.dataset.view; lsSet('tw-view', state.view); render(); window.scrollTo(0, 0); return; }
   if (t.dataset.act === 'logout') { if (sb) { await sb.auth.signOut(); toast('Déconnecté'); } else toast('Pas de compte connecté en mode local.'); return; }
+  if (t.dataset.act === 'stopview') { state.viewAs = null; state.view = 'admin'; render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.see) { const u = state.adminUsers.find(x => x.id === t.dataset.see); if (u) { state.viewAs = u.id === state.me ? null : {id: u.id, email: u.email}; state.view = 'dash'; render(); window.scrollTo(0, 0); } return; }
+  if (t.dataset.act === 'adminrefresh') { state.adminLoaded = false; render(); fetchAdmin(); return; }
   if (t.dataset.act === 'add') return openPanel();
   if (t.dataset.act === 'quick') return quickSave();
   if (t.dataset.act === 'demo') { state.demo = true; render(); return; }
