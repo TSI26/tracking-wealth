@@ -545,6 +545,23 @@ async function fetchAdmin() {
   state.adminLoaded = true;
   if (state.view === 'admin' || state.viewAs) render();
 }
+function signedOut() {
+  state.store = 'pending'; state.tx = []; state.loaded = false;
+  state.me = null; state.isAdmin = false; state.adminUsers = []; state.adminAll = []; state.adminLoaded = false; state.viewAs = null;
+  document.querySelectorAll('.admin-only').forEach(b => { b.hidden = true; });
+  if (state.view === 'admin') state.view = 'dash';
+  closePanel();
+  authMode = 'login';
+  render();
+  showAuth();
+}
+async function logout() {
+  // Sign out on the server, then always clear the local session too, even if the server call fails.
+  try { await sb.auth.signOut(); } catch (e) {}
+  try { await sb.auth.signOut({scope: 'local'}); } catch (e) {}
+  try { Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  signedOut();
+}
 async function initStore() {
   if (!cfg.supabaseUrl || !cfg.supabaseKey || cfg.supabaseUrl.includes('COLLE') || !window.supabase) {
     return useLocal('Mode local : la synchronisation n’est pas encore configurée (fichier config.js). Tes opérations restent sur cet appareil.');
@@ -556,11 +573,7 @@ async function initStore() {
       state.me = session.user.id; state.myEmail = session.user.email;
       if (state.store !== 'cloud') { state.store = 'cloud'; setTimeout(() => { fetchAll(); checkAdmin(); }, 0); }
     } else {
-      state.store = 'pending'; state.tx = []; state.loaded = false;
-      state.me = null; state.isAdmin = false; state.adminUsers = []; state.adminAll = []; state.adminLoaded = false; state.viewAs = null;
-      document.querySelectorAll('.admin-only').forEach(b => { b.hidden = true; });
-      if (state.view === 'admin') state.view = 'dash';
-      showAuth();
+      signedOut();
     }
   });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.store === 'cloud') fetchAll(); });
@@ -1229,7 +1242,7 @@ document.addEventListener('click', async e => {
   if (t.id === 'ov' && e.target === t) return closePanel();
   if (t.dataset.mode) { state.mode = t.dataset.mode; lsSet('tw-mode', state.mode); render(); window.scrollTo(0, 0); return; }
   if (t.dataset.view) { state.view = t.dataset.view; lsSet('tw-view', state.view); render(); window.scrollTo(0, 0); return; }
-  if (t.dataset.act === 'logout') { if (sb) { await sb.auth.signOut(); toast('Déconnecté'); } else toast('Pas de compte connecté en mode local.'); return; }
+  if (t.dataset.act === 'logout') { if (sb) await logout(); else toast('Pas de compte connecté en mode local.'); return; }
   if (t.dataset.act === 'stopview') { state.viewAs = null; state.view = 'admin'; render(); window.scrollTo(0, 0); return; }
   if (t.dataset.see) { const u = state.adminUsers.find(x => x.id === t.dataset.see); if (u) { state.viewAs = u.id === state.me ? null : {id: u.id, email: u.email}; state.view = 'dash'; render(); window.scrollTo(0, 0); } return; }
   if (t.dataset.act === 'adminrefresh') { state.adminLoaded = false; render(); fetchAdmin(); return; }
